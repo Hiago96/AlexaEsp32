@@ -1,0 +1,251 @@
+#include <Arduino.h>
+#include <IRremoteESP8266.h>
+#include <IRsend.h>
+const uint16_t kIrLed = 2;
+IRsend irsend(kIrLed);
+
+#ifdef ARDUINO_ARCH_ESP32
+#include <WiFi.h>
+#else
+#include <ESP8266WiFi.h>
+#endif
+#include <Espalexa.h>
+
+
+#define R1 15
+#define R2 2
+#define R3 17
+#define R4 23
+
+// protótipos
+boolean connectWifi();
+
+//retorno de chamada
+void dispositivo01(uint8_t brightness);
+void dispositivo02(uint8_t brightness);
+void dispositivo03(uint8_t brightness);
+void dispositivo04(uint8_t brightness);
+void dispositivo05(uint8_t brightness);
+void dispositivo06(uint8_t brightness);
+void dispositivo07(uint8_t brightness);
+void dispositivo08(uint8_t brightness);
+void dispositivo09(uint8_t brightness);
+void dispositivo10(uint8_t brightness);
+
+// Mude isso!!
+
+// Credenciais Wi-Fi
+const char* ssid = "Brutos 2GHz";
+const char* password = "08001234";
+
+// nomes de dispositivos
+String Device_1_Name = "Tv";
+String Device_2_Name = "Netflix";
+String Device_3_Name = "Menu";
+String Device_4_Name = "Amazon";
+String Device_5_Name = "Portão";
+
+boolean wifiConnected = false;
+
+Espalexa espalexa;
+
+
+void setup() 
+{
+  Serial.begin(115200);
+
+  pinMode(R1, OUTPUT);
+  pinMode(R2, OUTPUT);
+  pinMode(R3, OUTPUT);
+  pinMode(R4, OUTPUT);
+
+  // Initialise wifi connection
+  wifiConnected = connectWifi();
+
+  if (wifiConnected)
+  {
+
+    // Defina seus dispositivos aqui.
+    espalexa.addDevice(Device_1_Name, dispositivo01); //definição mais simples, estado padrão desligado
+    espalexa.addDevice(Device_2_Name, dispositivo02);
+    espalexa.addDevice(Device_3_Name, dispositivo03);
+    espalexa.addDevice(Device_4_Name, dispositivo04);
+    espalexa.addDevice(Device_5_Name, dispositivo05);
+    //espalexa.addDevice(Device_6_Name, dispositivo06);
+    //espalexa.addDevice(Device_7_Name, dispositivo07);
+    //espalexa.addDevice(Device_8_Name, dispositivo08);
+    //espalexa.addDevice(Device_9_Name, dispositivo09);
+   // espalexa.addDevice(Device_10_Name, dispositivo10);
+
+    espalexa.begin();
+
+  }
+
+  else
+  {
+    while (1)
+    {
+      Serial.println("Não é possível conectar ao Wi-Fi. Verifique os dados e reinicie o ESP.");
+      delay(2500);
+    }
+  }
+
+}
+
+void loop() 
+{
+  
+  espalexa.loop();
+  delay(1);
+}
+
+//nossas funções de retorno de chamada
+void dispositivo01(uint8_t brightness)
+{
+  //Controle o dispositivo
+  if (brightness)
+  {
+    if (brightness == 255)
+    {
+      digitalWrite(R1, HIGH);
+      irsend.sendNEC(0x20DF10EF);
+      Serial.println("Device1 ON");
+    }
+    //Serial.print("ON, brightness ");
+    //Serial.println(brightness);
+  }
+  else
+  {
+    digitalWrite(R1, LOW);
+    irsend.sendNEC(0x20DF10EF);
+    Serial.println("Device1 OFF");
+  }
+}
+
+void dispositivo02(uint8_t brightness)
+{
+
+  //Control the device 
+  if (brightness)
+  {
+    if (brightness == 255)
+    {
+      digitalWrite(R2, HIGH);
+      irsend.sendNEC(0x20DF6A95);
+      Serial.println("Device2 ON");
+    }
+    //Serial.print("ON, brightness ");
+    //Serial.println(brightness);
+  }
+  else
+  {
+    digitalWrite(R2, LOW);
+    irsend.sendNEC(0x20DF10EF);
+    Serial.println("Device2 OFF");
+  }
+}
+
+void dispositivo03(uint8_t brightness)
+{
+
+  //Control the device  
+  if (brightness)
+  {
+    if (brightness == 255)
+    {
+      digitalWrite(R3, HIGH);
+      irsend.sendNEC(0x20DF3EC1);
+      Serial.println("Menu ON");
+    }
+    //Serial.print("ON, brightness ");
+    //Serial.println(brightness);
+  }
+  else (R1 == LOW);
+    {
+      digitalWrite(R3, LOW);
+      irsend.sendNEC(0x20DF3EC1);
+      Serial.println("Menu ON");
+    }
+}
+
+void dispositivo04(uint8_t brightness)
+{
+
+  //Control the device 
+  if (brightness)
+  {
+
+    if (brightness == 255)
+    {
+      irsend.sendNEC(0x20DF3AC5);
+      Serial.println("Device4 ON");
+    }
+    //Serial.print("ON, brightness ");
+    //Serial.println(brightness);
+  }
+  else
+  {
+    irsend.sendNEC(0x20DF3AC5);
+    Serial.println("Device4 OFF");
+  }
+}
+
+void dispositivo05(uint8_t brightness)
+{
+
+  //Control the device 
+  if (brightness)
+  {digitalWrite(R4, HIGH);
+
+    if (brightness == 255)
+    {
+    digitalWrite(R4, HIGH);
+    delay(500);
+    digitalWrite(R4, LOW);
+    Serial.println("Device4 OFF");
+    }
+    //Serial.print("ON, brightness ");
+    //Serial.println(brightness);
+  }
+  else
+  {
+    digitalWrite(R4, HIGH);
+    delay(500);
+    digitalWrite(R4, LOW);
+    Serial.println("Device4 OFF");
+  }
+}
+
+// connect to wifi – returns true if successful or false if not
+boolean connectWifi()
+{
+  boolean state = true;
+  int i = 0;
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  Serial.println("");
+  Serial.println("Connecting to WiFi");
+
+  // Wait for connection
+  Serial.print("Connecting...");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    if (i > 20) {
+      state = false; break;
+    }
+    i++;
+  }
+  Serial.println("");
+  if (state) {
+    Serial.print("Connected to ");
+    Serial.println(ssid);
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+  }
+  else {
+    Serial.println("Connection failed.");
+  }
+  return state;
+}
